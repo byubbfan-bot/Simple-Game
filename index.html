@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Draft</title>
+    <title>Number Draft Puzzle</title>
     <style>
         :root {
             --bg-base: #ffffff;
@@ -207,7 +207,7 @@
     <p class="subtitle">Fill the 9 squares with digits 1 through 9.</p>
 
     <div class="instructions">
-        <strong>How to play:</strong> Click any cell on the grid at any time to switch or adjust your numbers, then hit <strong>Evaluate</strong>. 
+        <strong>How to play:</strong> Click any cell on the grid to change its number at any time, then hit <strong>Evaluate</strong>. 
         <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct.
         <br>• <span style="color: #2563eb; font-weight: bold;">Blue</span> = Number belongs adjacent (touching) to this cell.
     </div>
@@ -220,7 +220,7 @@
     <div id="grid" class="grid-3x3"></div>
 
     <div class="catalog-section">
-        <div class="catalog-title">Available Numbers</div>
+        <div class="catalog-title">Available Numbers (Click to Place)</div>
         <div id="number-pool" class="number-pool"></div>
     </div>
 
@@ -233,10 +233,9 @@
     let secretCombination = [];
     let boardState = Array(9).fill(null);
     let activeCellIndex = 0;
-    let cellHints = Array(9).fill(null); // 'green', 'blue', or null
+    let cellHints = Array(9).fill(null);
 
     function initGame() {
-        // Generate random secret sequence of numbers 1-9
         let pool = [...availableNumbers];
         secretCombination = [];
         while (pool.length > 0) {
@@ -258,10 +257,7 @@
     function isAdjacent(idx1, idx2) {
         let pos1 = getRowCol(idx1);
         let pos2 = getRowCol(idx2);
-        let rowDiff = Math.abs(pos1.r - pos2.r);
-        let colDiff = Math.abs(pos1.c - pos2.c);
-        // Adjacent means sharing an edge (Manhattan distance == 1)
-        return (rowDiff + colDiff === 1);
+        return (Math.abs(pos1.r - pos2.r) + Math.abs(pos1.c - pos2.c) === 1);
     }
 
     function selectCell(index) {
@@ -270,18 +266,17 @@
     }
 
     function placeNumber(num) {
-        // If number is already placed elsewhere, clear that previous cell
+        // If this number is already placed in another cell, clear it out from there first
         let existingIndex = boardState.indexOf(num);
         if (existingIndex !== -1) {
             boardState[existingIndex] = null;
             cellHints[existingIndex] = null;
         }
 
+        // Place new number into active cell and clear its hint
         boardState[activeCellIndex] = num;
-        cellHints[activeCellIndex] = null; // Clear hint when modifying cell
+        cellHints[activeCellIndex] = null;
 
-        // Auto-advance to next cell
-        activeCellIndex = (activeCellIndex + 1) % 9;
         render();
     }
 
@@ -307,7 +302,6 @@
                 cellHints[i] = 'green';
             } else {
                 allCorrect = false;
-                // Check if userVal is placed in a cell adjacent to its correct position in secretCombination
                 let correctPos = secretCombination.indexOf(userVal);
                 if (isAdjacent(i, correctPos)) {
                     cellHints[i] = 'blue';
@@ -323,16 +317,14 @@
             msgEl.innerText = '🎉 Congratulations! All numbers placed correctly!';
         } else {
             msgEl.style.color = '#3b82f6';
-            msgEl.innerText = 'Evaluated! Green = Exact match, Blue = Adjacent to correct spot. Feel free to switch numbers!';
+            msgEl.innerText = 'Evaluated! Feel free to click cells and change numbers to try again.';
         }
         render();
     }
 
     function render() {
-        // Update HUD
         document.getElementById('hud-cell').innerText = `Cell ${activeCellIndex + 1}`;
 
-        // Render Grid
         const gridEl = document.getElementById('grid');
         gridEl.innerHTML = '';
         
@@ -340,11 +332,9 @@
             const cell = document.createElement('div');
             let cls = 'cell';
             if (idx === activeCellIndex) cls += ' selected';
-            if (cellHints[idx] === 'green') {
-                cls += ' green-hint';
-            } else if (cellHints[idx] === 'blue') {
-                cls += ' blue-hint';
-            }
+            if (cellHints[idx] === 'green') cls += ' green-hint';
+            else if (cellHints[idx] === 'blue') cls += ' blue-hint';
+            
             cell.className = cls;
             cell.onclick = () => selectCell(idx);
 
@@ -355,16 +345,14 @@
             gridEl.appendChild(cell);
         });
 
-        // Render Number Pool
         const poolEl = document.getElementById('number-pool');
         poolEl.innerHTML = '';
         availableNumbers.forEach(num => {
             const btn = document.createElement('button');
             btn.className = 'pool-btn';
             btn.innerText = num;
-            let isUsed = boardState.includes(num);
-
-            btn.disabled = isUsed;
+            
+            // Allow numbers to be re-selected freely from the pool for swapping
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
         });
