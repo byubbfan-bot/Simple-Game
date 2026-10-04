@@ -169,10 +169,18 @@
             cursor: pointer;
             transition: 0.15s ease;
         }
-        .pool-btn:hover {
+        .pool-btn:hover:not(:disabled) {
             background: var(--accent-blue);
             color: #ffffff;
             border-color: var(--accent-blue);
+        }
+        .pool-btn:disabled {
+            opacity: 0.35;
+            background: #cbd5e1;
+            border-color: #94a3b8;
+            color: #475569;
+            cursor: not-allowed;
+            text-decoration: line-through;
         }
         .btn {
             display: block;
@@ -220,7 +228,7 @@
     <div id="grid" class="grid-3x3"></div>
 
     <div class="catalog-section">
-        <div class="catalog-title">Available Numbers</div>
+        <div class="catalog-title" id="pool-title">Available Numbers</div>
         <div id="number-pool" class="number-pool"></div>
     </div>
 
@@ -249,6 +257,7 @@
         cellHints = Array(9).fill(null);
         activeCellIndex = 0;
         document.getElementById('message').innerText = '';
+        document.getElementById('pool-title').innerText = 'Available Numbers';
         render();
     }
 
@@ -356,6 +365,9 @@
                 }
             }
         }
+        
+        // Update instruction title above number pool so it no longer mentions crossed-out numbers
+        document.getElementById('pool-title').innerText = 'Available Numbers (Green-locked numbers are disabled)';
         render();
     }
 
@@ -388,8 +400,23 @@
         poolEl.innerHTML = '';
         availableNumbers.forEach(num => {
             const btn = document.createElement('button');
+            
+            // Check if this number is locked inside a green cell
+            let isGreenLocked = false;
+            boardState.forEach((val, idx) => {
+                if (val === num && lockedCells[idx]) {
+                    isGreenLocked = true;
+                }
+            });
+
             btn.className = 'pool-btn';
-            btn.disabled = false;
+            // ONLY disable and fade out the number if it is locked green in the correct position
+            if (isGreenLocked) {
+                btn.disabled = true;
+            } else {
+                btn.disabled = false;
+            }
+
             btn.innerText = num;
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
