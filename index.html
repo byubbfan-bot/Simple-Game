@@ -12,6 +12,7 @@
             --border-color: #e2e8f0;
             --accent-green: #10b981;
             --accent-blue: #3b82f6;
+            --accent-gold: #d4af37;
             --text-main: #1e293b;
             --text-muted: #64748b;
         }
@@ -47,7 +48,7 @@
         }
         .subtitle {
             color: var(--text-muted);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-size: 0.95em;
             font-weight: 500;
         }
@@ -57,13 +58,28 @@
             border-left: 4px solid var(--accent-blue);
             border-radius: 6px;
             padding: 14px 18px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             font-size: 0.9em;
             color: var(--text-muted);
             text-align: left;
         }
         .instructions strong {
             color: var(--text-main);
+        }
+        .daily-tracker {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(212, 175, 55, 0.08);
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .daily-tracker strong {
+            color: #b45309;
         }
         .hud {
             display: flex;
@@ -198,6 +214,40 @@
             font-size: 0.95em;
             min-height: 24px;
         }
+        /* Win Banner Graphic Overlay */
+        .result-graphic {
+            padding: 25px 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+            border: 1px solid #059669;
+            background: #ecfdf5;
+        }
+        .graphic-title {
+            font-size: 1.6em;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin: 0 0 8px 0;
+            color: #065f46;
+        }
+        .graphic-banner {
+            font-size: 0.95em;
+            font-weight: 500;
+            margin-bottom: 15px;
+            color: #047857;
+        }
+        .percentile-badge {
+            background: #ffffff;
+            border: 1px solid #10b981;
+            color: #047857;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-weight: 700;
+            margin: 10px auto;
+            max-width: 360px;
+        }
     </style>
 </head>
 <body>
@@ -206,8 +256,13 @@
     <h1>Number Draft</h1>
     <p class="subtitle">Fill the 9 squares with digits 1 through 9.</p>
 
+    <div class="daily-tracker">
+        <div>Attempt: <strong id="attempt-counter">Attempt #1</strong></div>
+        <div style="font-size: 0.85em; color: var(--text-muted);">Resets 5 AM ET: <span id="daily-timer" style="color: #b45309; font-weight: bold;">--:--:--</span></div>
+    </div>
+
     <div class="instructions">
-        <strong>How to play:</strong> Click a cell or let it auto-advance when you pick a number. Hit <strong>Evaluate</strong> when ready. 
+        <strong>How to play:</strong> Click a cell or let it auto-advance when you pick a number. Hit <strong>Evaluate Board</strong> when ready. 
         <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct (locks in!).
         <br>• <span style="color: #3b82f6; font-weight: bold;">Blue</span> = Number belongs adjacent (touching) to this cell.
     </div>
@@ -217,15 +272,20 @@
         <button onclick="clearBoard()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85em; font-weight:600; text-decoration:underline;">Reset Board</button>
     </div>
 
-    <div id="grid" class="grid-3x3"></div>
+    <div id="game-workspace">
+        <div id="grid" class="grid-3x3"></div>
 
-    <div class="catalog-section">
-        <div class="catalog-title">Available Numbers</div>
-        <div id="number-pool" class="number-pool"></div>
+        <div class="catalog-section">
+            <div class="catalog-title">Available Numbers</div>
+            <div id="number-pool" class="number-pool"></div>
+        </div>
+
+        <button class="btn" onclick="evaluateBoard()">Evaluate Board</button>
+        <div id="message" class="message"></div>
     </div>
 
-    <button class="btn" onclick="evaluateBoard()">Evaluate Roster</button>
-    <div id="message" class="message"></div>
+    <!-- WIN BANNER CONTAINER -->
+    <div id="win-container" style="display:none;"></div>
 </div>
 
 <script>
@@ -235,20 +295,89 @@
     let activeCellIndex = 0;
     let lockedCells = Array(9).fill(false);
     let cellHints = Array(9).fill(null);
+    let attemptCount = 1;
+
+    function getEastern5AMDayNumber() {
+        const now = new Date();
+        const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const easternDate = new Date(utcMs - (5 * 3600000));
+        const cycleDate = new Date(easternDate.getTime() - (5 * 3600000));
+        return Math.floor(cycleDate.getTime() / 86400000);
+    }
+
+    function updateDailyCountdown() {
+        const now = new Date();
+        const utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const easternDate = new Date(utcMs - (5 * 3600000));
+        
+        let target = new Date(easternDate);
+        target.setHours(5, 0, 0, 0);
+        if (easternDate.getTime() >= target.getTime()) {
+            target.setDate(target.getDate() + 1);
+        }
+        
+        const diff = Math.max(0, target.getTime() - easternDate.getTime());
+        const hours = String(Math.floor(diff / 3600000)).padStart(2, '0');
+        const minutes = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+        const seconds = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+        
+        const timerEl = document.getElementById('daily-timer');
+        if (timerEl) timerEl.innerText = `${hours}h ${minutes}m ${seconds}s`;
+    }
+    setInterval(updateDailyCountdown, 1000);
+
+    function getDailyHistory() {
+        let raw = localStorage.getItem('number_draft_daily_data');
+        if (!raw) return { currentDay: null, triesToday: 1, todayWon: false };
+        try {
+            return JSON.parse(raw);
+        } catch(e) {
+            return { currentDay: null, triesToday: 1, todayWon: false };
+        }
+    }
+
+    function syncDailyState() {
+        let data = getDailyHistory();
+        let today = getEastern5AMDayNumber();
+        if (data.currentDay !== today) {
+            data.currentDay = today;
+            data.triesToday = 1;
+            data.todayWon = false;
+            localStorage.setItem('number_draft_daily_data', JSON.stringify(data));
+        }
+        attemptCount = data.triesToday;
+        return data;
+    }
 
     function initGame() {
+        let data = syncDailyState();
+        
+        // Seeded random based on day number so all players get the same daily puzzle
+        let dayNum = getEastern5AMDayNumber();
+        let seed = (dayNum * 9301 + 49297) % 233280;
+        function seededRandom() {
+            seed = (seed * 9301 + 49297) % 233280;
+            return seed / 233280;
+        }
+
         let pool = [...availableNumbers];
         secretCombination = [];
         while (pool.length > 0) {
-            let randomIndex = Math.floor(Math.random() * pool.length);
-            secretCombination.push(pool.splice(randomIndex, 1)[0]);
+            let index = Math.floor(seededRandom() * pool.length);
+            secretCombination.push(pool.splice(index, 1)[0]);
         }
         
         boardState = Array(9).fill(null);
         lockedCells = Array(9).fill(false);
         cellHints = Array(9).fill(null);
         activeCellIndex = 0;
+
         document.getElementById('message').innerText = '';
+        document.getElementById('win-container').style.display = 'none';
+        document.getElementById('game-workspace').style.display = 'block';
+        
+        document.getElementById('attempt-counter').innerText = `Attempt #${attemptCount}`;
+        updateDailyCountdown();
         render();
     }
 
@@ -263,7 +392,7 @@
     }
 
     function selectCell(index) {
-        if (lockedCells[index]) return; // Cannot select locked green cells
+        if (lockedCells[index]) return;
         activeCellIndex = index;
         render();
     }
@@ -315,6 +444,14 @@
         render();
     }
 
+    function calculatePercentile(tries) {
+        if (tries === 1) return 99;
+        if (tries === 2) return 90;
+        if (tries === 3) return 75;
+        if (tries === 4) return 60;
+        return Math.max(15, 80 - (tries * 10));
+    }
+
     function evaluateBoard() {
         if (boardState.some(val => val === null)) {
             document.getElementById('message').style.color = '#ef4444';
@@ -342,21 +479,54 @@
             }
         }
 
-        const msgEl = document.getElementById('message');
+        let data = getDailyHistory();
+
         if (allCorrect || lockedCells.every(val => val)) {
-            msgEl.style.color = '#059669';
-            msgEl.innerText = '🎉 Congratulations! All numbers locked in correctly!';
+            if (!data.todayWon) {
+                data.todayWon = true;
+                localStorage.setItem('number_draft_daily_data', JSON.stringify(data));
+            }
+            triggerWinDisplay(data.triesToday);
         } else {
-            msgEl.style.color = '#3b82f6';
-            msgEl.innerText = 'Evaluated! Green numbers are locked. Swap or change any other numbers freely.';
+            // Increment try count for next attempt
+            data.triesToday++;
+            localStorage.setItem('number_draft_daily_data', JSON.stringify(data));
+            attemptCount = data.triesToday;
+            document.getElementById('attempt-counter').innerText = `Attempt #${attemptCount}`;
+
+            document.getElementById('message').style.color = '#3b82f6';
+            document.getElementById('message').innerText = 'Evaluated! Green numbers are locked. Adjusting for next attempt...';
+            
             for (let i = 0; i < 9; i++) {
                 if (!lockedCells[i]) {
                     activeCellIndex = i;
                     break;
                 }
             }
+            render();
         }
-        render();
+    }
+
+    function triggerWinDisplay(tries) {
+        document.getElementById('game-workspace').style.display = 'none';
+        const winContainer = document.getElementById('win-container');
+        winContainer.style.display = 'block';
+
+        let percentile = calculatePercentile(tries);
+
+        winContainer.innerHTML = `
+            <div class="result-graphic">
+                <div class="graphic-title">🎉 Congratulations!</div>
+                <div class="graphic-banner">You successfully solved today's number sequence!</div>
+                <div class="percentile-badge">
+                    📊 Solved in <strong>${tries} ${tries === 1 ? 'try' : 'tries'}</strong><br>
+                    🏆 You performed better than <strong>${percentile}%</strong> of players today!
+                </div>
+                <div style="margin-top: 20px; color: var(--text-muted); font-size: 0.85em;">
+                    Next daily puzzle available at 5:00 AM ET.
+                </div>
+            </div>
+        `;
     }
 
     function render() {
@@ -389,17 +559,7 @@
         availableNumbers.forEach(num => {
             const btn = document.createElement('button');
             btn.className = 'pool-btn';
-            
-            // Check if this number is locked green in the correct position
-            let isGreenLocked = false;
-            boardState.forEach((val, idx) => {
-                if (val === num && lockedCells[idx]) {
-                    isGreenLocked = true;
-                }
-            });
-
-            // Only disable/gray out if it's permanently locked green. Otherwise it stays completely normal.
-            btn.disabled = isGreenLocked;
+            btn.disabled = false;
             btn.innerText = num;
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
