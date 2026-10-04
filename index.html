@@ -389,7 +389,7 @@
         availableNumbers.forEach(num => {
             const btn = document.createElement('button');
             btn.className = 'pool-btn';
-            btn.disabled = false; // Keep all number buttons fully active and normal
+            btn.disabled = false;
             btn.innerText = num;
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
