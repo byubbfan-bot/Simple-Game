@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Draft Puzzle</title>
+    <!-- Tailwind CSS for clean, minimalist styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            color: #111827;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 flex flex-col items-center justify-between">
+
+    <div class="w-full max-w-xl bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sm:p-8">
+        
+        <!-- Header -->
+        <header class="text-center mb-6">
+            <h1 class="text-2xl sm:text-3xl font-black uppercase tracking-tight text-gray-900 mb-1">Number Draft</h1>
+            <p class="text-sm text-gray-500 font-medium">Draft 9 unique numbers into the 3x3 grid to match the hidden target sequence.</p>
+        </header>
+
+        <!-- Mode Selector & Info -->
+        <div class="flex flex-col sm:flex-row justify-between items-center bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 gap-3">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Mode:</span>
+                <select id="mode-select" class="bg-white border border-gray-300 text-gray-900 font-semibold text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900">
+                    <option value="daily">🔥 Daily Challenge</option>
+                    <option value="freeplay">⚡ Free Play</option>
+                </select>
+            </div>
+            <div id="mode-status" class="text-xs font-semibold text-gray-600 bg-white border border-gray-200 px-3 py-1.5 rounded-lg">
+                Attempt #1
+            </div>
+        </div>
+
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl mb-6 text-xs sm:text-sm text-amber-900 font-medium">
+            💡 <strong class="font-bold">Hint:</strong> Place numbers 1 through 9. Green indicators show exact matches, blue indicators show correct numbers in wrong positions.
+        </div>
+
+        <div id="scorecard-container" class="mb-6 hidden bg-gray-50 border border-gray-200 rounded-xl p-4 text-center">
+            <div class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Feedback Scorecard</div>
+            <div class="flex justify-center gap-2" id="scorecard-dots">
+                <!-- Dynamic feedback indicators will appear here -->
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-gray-500">Active Board (3x3 Grid)</span>
+                <span id="active-slot-indicator" class="text-xs font-bold text-amber-600">Selecting for Cell 1</span>
+            </div>
+            <div id="grid-container" class="grid grid-cols-3 gap-3">
+                <!-- 9 grid slots generated dynamically -->
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Available Number Pool</h2>
+            <div id="draft-pool" class="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                <!-- Available numbers rendered here -->
+            </div>
+        </div>
+
+        <div id="action-container" class="mt-4">
+            <button id="submit-btn" onclick="evaluateBoard()" disabled class="w-full py-3 bg-gray-200 text-gray-400 font-bold rounded-xl uppercase tracking-wider text-sm cursor-not-allowed transition-colors">
+                Fill All 9 Squares to Evaluate
+            </button>
+        </div>
+
+        <div id="result-banner" class="hidden mt-6 p-5 rounded-xl text-center border">
+            <!-- Dynamic win/loss results -->
+        </div>
+
+    </div>
+
+    <footer class="mt-8 text-xs text-gray-400 font-medium">
+        Minimalist Number Puzzle &bull; Clean White Edition
+    </footer>
+
+    <script>
+        let mode = 'daily';
+        let activeCell = 0; // 0 to 8
+        let board = Array(9).fill(null);
+        let secretCombination = [3, 7, 1, 9, 4, 6, 2, 8, 5];
+        let attempts = 1;
+
+        function initGame() {
+            board = Array(9).fill(null);
+            activeCell = 0;
+            
+            if (mode === 'daily') {
+                // Generate a pseudo-random seed based on current date
+                const today = new Date().toISOString().slice(0, 10);
+                let hash = 0;
+                for (let i = 0; i < today.length; i++) {
+                    hash = ((hash << 5) - hash) + today.charCodeAt(i);
+                    hash |= 0;
+                }
+                // Deterministic shuffle of [1..9] based on date hash
+                let pool = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+                secretCombination = [];
+                let seed = Math.abs(hash);
+                for (let i = 9; i > 0; i--) {
+                    seed = (seed * 9301 + 49297) % 233280;
+                    let idx = Math.floor((seed / 233280) * pool.length);
+                    secretCombination.push(pool.splice(idx, 1)[0]);
+                }
+            } else {
+                // Random combination for freeplay
+                let pool = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+                secretCombination = pool.sort(() => Math.random() - 0.5);
+            }
+
+            document.getElementById('result-banner').classList.add('hidden');
+            document.getElementById('scorecard-container').classList.add('hidden');
+            renderUI();
+        }
+
+        function renderUI() {
+            // Render 3x3 Grid
+            const gridContainer = document.getElementById('grid-container');
+            gridContainer.innerHTML = '';
+            
+            for (let i = 0; i < 9; i++) {
+                const val = board[i];
+                const isActive = (i === activeCell);
+                
+                const cell = document.createElement('div');
+                cell.className = `h-20 sm:h-24 border-2 rounded-xl flex flex-col items-center justify-center cursor-pointer font-bold text-2xl sm:text-3xl transition-all ${
+                    isActive ? 'border-amber-500 bg-amber-50/40 shadow-sm' : 'border-gray-200 bg-white hover:border-gray-300'
+                }`;
+                
+                if (val !== null) {
+                    cell.innerHTML = `<span class="text-gray-900">${val}</span><span class="text-[10px] text-gray-400 font-normal uppercase mt-0.5">Cell ${i+1}</span>`;
+                } else {
+                    cell.innerHTML = `<span class="text-gray-300">-</span><span class="text-[10px] text-gray-400 font-normal uppercase mt-0.5">Cell ${i+1}</span>`;
+                }
+
+                cell.onclick = () => {
+                    activeCell = i;
+                    document.getElementById('active-slot-indicator').innerText = `Selecting for Cell ${i+1}`;
+                    renderUI();
+                };
+                gridContainer.appendChild(cell);
+            }
+
+            // Render Draft Pool (Numbers 1 through 9)
+            const poolContainer = document.getElementById('draft-pool');
+            poolContainer.innerHTML = '';
+            
+            const usedNumbers = board.filter(x => x !== null);
+
+            for (let num = 1; num <= 9; num++) {
+                const isUsed = usedNumbers.includes(num);
+                const btn = document.createElement('button');
+                btn.className = `py-3 rounded-xl font-bold text-lg border transition-all ${
+                    isUsed 
+                        ? 'bg-gray-100 text-gray-300 border-gray-200 cursor-not-allowed' 
+                        : 'bg-white text-gray-800 border-gray-200 hover:border-gray-900 hover:bg-gray-50 shadow-xs'
+                }`;
+                btn.innerText = num;
+                btn.disabled = isUsed;
+                
+                if (!isUsed) {
+                    btn.onclick = () => {
+                        board[activeCell] = num;
+                        // Auto advance to next empty cell
+                        let nextEmpty = board.findIndex((val, idx) => val === null && idx > activeCell);
+                        if (nextEmpty === -1) {
+                            nextEmpty = board.findIndex(val => val === null);
+                        }
+                        if (nextEmpty !== -1) {
+                            activeCell = nextEmpty;
+                        }
+                        renderUI();
+                    };
+                }
+                poolContainer.appendChild(btn);
+            }
+
+            // Check if board is full
+            const isFull = board.every(x => x !== null);
+            const submitBtn = document.getElementById('submit-btn');
+            if (isFull) {
+                submitBtn.disabled = false;
+                submitBtn.className = "w-full py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl uppercase tracking-wider text-sm cursor-pointer shadow-sm transition-all";
+                submitBtn.innerText = "Evaluate Board Setup";
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.className = "w-full py-3 bg-gray-200 text-gray-400 font-bold rounded-xl uppercase tracking-wider text-sm cursor-not-allowed";
+                submitBtn.innerText = "Fill All 9 Squares to Evaluate";
+            }
+        }
+
+        function evaluateBoard() {
+            const isFull = board.every(x => x !== null);
+            if (!isFull) return;
+
+            let exactMatches = 0;
+            let numberMatches = 0;
+
+            // Calculate feedback
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === secretCombination[i]) {
+                    exactMatches++;
+                } else if (secretCombination.includes(board[i])) {
+                    numberMatches++;
+                }
+            }
+
+            // Show Scorecard Feedback
+            const scorecardContainer = document.getElementById('scorecard-container');
+            const dotsContainer = document.getElementById('scorecard-dots');
+            scorecardContainer.classList.remove('hidden');
+            dotsContainer.innerHTML = '';
+
+            for (let i = 0; i < 9; i++) {
+                const dot = document.createElement('div');
+                let colorClass = 'bg-gray-200 text-gray-500';
+                if (board[i] === secretCombination[i]) {
+                    colorClass = 'bg-emerald-500 text-white font-bold';
+                } else if (secretCombination.includes(board[i])) {
+                    colorClass = 'bg-blue-500 text-white font-bold';
+                }
+                dot.className = `w-9 h-9 rounded-lg flex items-center justify-center text-sm ${colorClass}`;
+                dot.innerText = board[i];
+                dotsContainer.appendChild(dot);
+            }
+
+            const banner = document.getElementById('result-banner');
+            banner.classList.remove('hidden');
+
+            if (exactMatches === 9) {
+                banner.className = "mt-6 p-5 rounded-xl text-center border bg-emerald-50 border-emerald-200 text-emerald-900";
+                banner.innerHTML = `
+                    <h3 class="text-lg font-black uppercase mb-1">🎉 Perfect Match!</h3>
+                    <p class="text-sm text-emerald-700 mb-3">You solved the secret number combination in ${attempts} attempt(s)!</p>
+                    <button onclick="initGame()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-lg cursor-pointer transition-colors">Play Again</button>
+                `;
+            } else {
+                attempts++;
+                document.getElementById('mode-status').innerText = `Attempt #${attempts}`;
+                banner.className = "mt-6 p-5 rounded-xl text-center border bg-gray-50 border-gray-200 text-gray-900";
+                banner.innerHTML = `
+                    <h3 class="text-base font-bold mb-1">Result: ${exactMatches} Exact Position(s), ${numberMatches} Correct Number(s) elsewhere.</h3>
+                    <p class="text-xs text-gray-500">Review the green (exact) and blue (misplaced) indicators above and adjust your numbers.</p>
+                `;
+            }
+        }
+
+        document.getElementById('mode-select').addEventListener('change', (e) => {
+            mode = e.target.value;
+            attempts = 1;
+            document.getElementById('mode-status').innerText = `Attempt #${attempts}`;
+            initGame();
+        });
+
+        // Initialize app on load
+        window.onload = initGame;
+    </script>
+</body>
+</html>
