@@ -164,10 +164,17 @@
             cursor: pointer;
             transition: 0.15s ease;
         }
-        .pool-btn:hover:not(:disabled) {
+        .pool-btn:hover:not(.used) {
             background: var(--accent-blue);
             color: #ffffff;
             border-color: var(--accent-blue);
+        }
+        .pool-btn.used {
+            opacity: 0.3;
+            background: #e2e8f0;
+            border-color: #cbd5e1;
+            color: #94a3b8;
+            cursor: default;
         }
         .btn {
             display: block;
@@ -348,7 +355,8 @@
         poolEl.innerHTML = '';
         availableNumbers.forEach(num => {
             const btn = document.createElement('button');
-            btn.className = 'pool-btn';
+            let isUsed = boardState.includes(num);
+            btn.className = isUsed ? 'pool-btn used' : 'pool-btn';
             btn.innerText = num;
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
