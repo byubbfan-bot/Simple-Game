@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Draft Puzzle</title>
+    <title>Number Draft</title>
     <style>
         :root {
             --bg-base: #ffffff;
@@ -100,7 +100,7 @@
             transition: all 0.15s ease;
             position: relative;
         }
-        .cell:hover:not(.locked) {
+        .cell:hover {
             border-color: var(--accent-blue);
             transform: translateY(-2px);
         }
@@ -108,14 +108,9 @@
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
-        .cell.locked {
-            background: var(--accent-green);
-            border-color: #059669;
-            color: #ffffff;
-            cursor: not-allowed;
-        }
-        .cell.locked .cell-label, .cell.locked .cell-value {
-            color: #ffffff;
+        .cell.green-hint {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: var(--accent-green);
         }
         .cell.blue-hint {
             background: rgba(59, 130, 246, 0.12);
@@ -212,8 +207,8 @@
     <p class="subtitle">Fill the 9 squares with digits 1 through 9.</p>
 
     <div class="instructions">
-        <strong>How to play:</strong> Click a cell on the grid, then pick a number from the pool. Hit <strong>Evaluate</strong>. 
-        <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct (locks in!).
+        <strong>How to play:</strong> Click any cell on the grid at any time to switch or adjust your numbers, then hit <strong>Evaluate</strong>. 
+        <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct.
         <br>• <span style="color: #2563eb; font-weight: bold;">Blue</span> = Number belongs adjacent (touching) to this cell.
     </div>
 
@@ -238,7 +233,6 @@
     let secretCombination = [];
     let boardState = Array(9).fill(null);
     let activeCellIndex = 0;
-    let lockedCells = Array(9).fill(false);
     let cellHints = Array(9).fill(null); // 'green', 'blue', or null
 
     function initGame() {
@@ -251,7 +245,6 @@
         }
         
         boardState = Array(9).fill(null);
-        lockedCells = Array(9).fill(false);
         cellHints = Array(9).fill(null);
         activeCellIndex = 0;
         document.getElementById('message').innerText = '';
@@ -272,15 +265,12 @@
     }
 
     function selectCell(index) {
-        if (lockedCells[index]) return; // Cannot select locked green cells
         activeCellIndex = index;
         render();
     }
 
     function placeNumber(num) {
-        if (lockedCells[activeCellIndex]) return;
-        
-        // If number is already placed elsewhere, remove it from that cell
+        // If number is already placed elsewhere, clear that previous cell
         let existingIndex = boardState.indexOf(num);
         if (existingIndex !== -1) {
             boardState[existingIndex] = null;
@@ -288,26 +278,17 @@
         }
 
         boardState[activeCellIndex] = num;
-        cellHints[activeCellIndex] = null;
+        cellHints[activeCellIndex] = null; // Clear hint when modifying cell
 
-        // Auto-advance to next unlocked cell
-        for (let i = 1; i <= 9; i++) {
-            let nextIdx = (activeCellIndex + i) % 9;
-            if (!lockedCells[nextIdx]) {
-                activeCellIndex = nextIdx;
-                break;
-            }
-        }
+        // Auto-advance to next cell
+        activeCellIndex = (activeCellIndex + 1) % 9;
         render();
     }
 
     function clearBoard() {
-        for(let i=0; i<9; i++) {
-            if(!lockedCells[i]) {
-                boardState[i] = null;
-                cellHints[i] = null;
-            }
-        }
+        boardState = Array(9).fill(null);
+        cellHints = Array(9).fill(null);
+        document.getElementById('message').innerText = '';
         render();
     }
 
@@ -321,11 +302,8 @@
         let allCorrect = true;
 
         for (let i = 0; i < 9; i++) {
-            if (lockedCells[i]) continue;
-
             let userVal = boardState[i];
             if (userVal === secretCombination[i]) {
-                lockedCells[i] = true;
                 cellHints[i] = 'green';
             } else {
                 allCorrect = false;
@@ -340,12 +318,12 @@
         }
 
         const msgEl = document.getElementById('message');
-        if (allCorrect || lockedCells.every(val => val)) {
+        if (allCorrect) {
             msgEl.style.color = '#059669';
-            msgEl.innerText = '🎉 Congratulations! All numbers locked in correctly!';
+            msgEl.innerText = '🎉 Congratulations! All numbers placed correctly!';
         } else {
             msgEl.style.color = '#3b82f6';
-            msgEl.innerText = 'Evaluated! Green = Locked, Blue = Adjacent to correct spot.';
+            msgEl.innerText = 'Evaluated! Green = Exact match, Blue = Adjacent to correct spot. Feel free to switch numbers!';
         }
         render();
     }
@@ -362,8 +340,8 @@
             const cell = document.createElement('div');
             let cls = 'cell';
             if (idx === activeCellIndex) cls += ' selected';
-            if (lockedCells[idx]) {
-                cls += ' locked';
+            if (cellHints[idx] === 'green') {
+                cls += ' green-hint';
             } else if (cellHints[idx] === 'blue') {
                 cls += ' blue-hint';
             }
@@ -385,16 +363,8 @@
             btn.className = 'pool-btn';
             btn.innerText = num;
             let isUsed = boardState.includes(num);
-            let isLockedUsed = false;
-            
-            // Check if this number is locked in a cell
-            boardState.forEach((val, idx) => {
-                if (val === num && lockedCells[idx]) isLockedUsed = true;
-            });
 
             btn.disabled = isUsed;
-            if (isLockedUsed) btn.style.opacity = '0.3';
-
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
         });
