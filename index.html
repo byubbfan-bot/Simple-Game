@@ -11,7 +11,7 @@
             --bg-card: #ffffff;
             --border-color: #e2e8f0;
             --accent-green: #10b981;
-            --accent-blue: #3b82f6;
+            --accent-yellow: #f59e0b;
             --accent-gold: #d4af37;
             --text-main: #1e293b;
             --text-muted: #64748b;
@@ -55,7 +55,7 @@
         .instructions {
             background: #f1f5f9;
             border: 1px solid var(--border-color);
-            border-left: 4px solid var(--accent-blue);
+            border-left: 4px solid var(--accent-yellow);
             border-radius: 6px;
             padding: 14px 18px;
             margin-bottom: 20px;
@@ -133,9 +133,9 @@
         .cell.locked .cell-label, .cell.locked .cell-value {
             color: #ffffff;
         }
-        .cell.blue-hint {
-            background: rgba(59, 130, 246, 0.12);
-            border-color: var(--accent-blue);
+        .cell.yellow-hint {
+            background: rgba(245, 158, 11, 0.12);
+            border-color: var(--accent-yellow);
         }
         .cell-label {
             font-size: 0.65em;
@@ -264,7 +264,7 @@
     <div class="instructions">
         <strong>How to play:</strong> Click a cell or let it auto-advance when you pick a number. Hit <strong>Evaluate Board</strong> when ready. 
         <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct (locks in!).
-        <br>• <span style="color: #3b82f6; font-weight: bold;">Blue</span> = Number belongs adjacent (touching) to this cell.
+        <br>• <span style="color: #d97706; font-weight: bold;">Yellow</span> = Number belongs adjacent (touching) to this cell.
     </div>
 
     <div class="hud">
@@ -471,7 +471,7 @@
                 allCorrect = false;
                 let correctPos = secretCombination.indexOf(userVal);
                 if (isAdjacent(i, correctPos)) {
-                    cellHints[i] = 'blue';
+                    cellHints[i] = 'yellow';
                 } else {
                     cellHints[i] = null;
                 }
@@ -492,9 +492,8 @@
             attemptCount = data.triesToday;
             document.getElementById('attempt-counter').innerText = `Attempt #${attemptCount}`;
 
-            document.getElementById('message').style.color = '#3b82f6';
-            document.getElementById('message').innerText = 'Evaluated! Green numbers are locked. Adjusting for next attempt...';
-            
+            document.getElementById('message').style.color = '#b45309';
+            document.getElementById('message').innerText = 'Evaluated! Green numbers are locked. Yellow means adjacent to correct spot.';
             for (let i = 0; i < 9; i++) {
                 if (!lockedCells[i]) {
                     activeCellIndex = i;
@@ -539,8 +538,8 @@
             if (idx === activeCellIndex) cls += ' selected';
             if (lockedCells[idx]) {
                 cls += ' locked';
-            } else if (cellHints[idx] === 'blue') {
-                cls += ' blue-hint';
+            } else if (cellHints[idx] === 'yellow') {
+                cls += ' yellow-hint';
             }
             cell.className = cls;
             cell.onclick = () => selectCell(idx);
