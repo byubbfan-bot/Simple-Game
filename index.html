@@ -100,7 +100,7 @@
             transition: all 0.15s ease;
             position: relative;
         }
-        .cell:hover {
+        .cell:hover:not(.locked) {
             border-color: var(--accent-blue);
             transform: translateY(-2px);
         }
@@ -108,9 +108,14 @@
             border-color: var(--accent-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
-        .cell.green-hint {
-            background: rgba(16, 185, 129, 0.12);
-            border-color: var(--accent-green);
+        .cell.locked {
+            background: var(--accent-green);
+            border-color: #059669;
+            color: #ffffff;
+            cursor: not-allowed;
+        }
+        .cell.locked .cell-label, .cell.locked .cell-value {
+            color: #ffffff;
         }
         .cell.blue-hint {
             background: rgba(59, 130, 246, 0.12);
@@ -169,6 +174,11 @@
             color: #ffffff;
             border-color: var(--accent-blue);
         }
+        .pool-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: #f1f5f9;
+        }
         .btn {
             display: block;
             width: 100%;
@@ -202,8 +212,8 @@
     <p class="subtitle">Fill the 9 squares with digits 1 through 9.</p>
 
     <div class="instructions">
-        <strong>How to play:</strong> Click a cell or let it auto-advance when you pick a number. Hit <strong>Evaluate</strong> when ready. 
-        <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct.
+        <strong>How to play:</strong> Click a cell on the grid, then pick a number from the pool. Hit <strong>Evaluate</strong>. 
+        <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct (locks in!).
         <br>• <span style="color: #2563eb; font-weight: bold;">Blue</span> = Number belongs adjacent (touching) to this cell.
     </div>
 
@@ -215,7 +225,7 @@
     <div id="grid" class="grid-3x3"></div>
 
     <div class="catalog-section">
-        <div class="catalog-title">Available Numbers (Click to Place)</div>
+        <div class="catalog-title">Available Numbers</div>
         <div id="number-pool" class="number-pool"></div>
     </div>
 
@@ -228,9 +238,11 @@
     let secretCombination = [];
     let boardState = Array(9).fill(null);
     let activeCellIndex = 0;
-    let cellHints = Array(9).fill(null);
+    let lockedCells = Array(9).fill(false);
+    let cellHints = Array(9).fill(null); // 'green', 'blue', or null
 
     function initGame() {
+        // Generate random secret sequence of numbers 1-9
         let pool = [...availableNumbers];
         secretCombination = [];
         while (pool.length > 0) {
@@ -239,6 +251,7 @@
         }
         
         boardState = Array(9).fill(null);
+        lockedCells = Array(9).fill(false);
         cellHints = Array(9).fill(null);
         activeCellIndex = 0;
         document.getElementById('message').innerText = '';
@@ -252,37 +265,49 @@
     function isAdjacent(idx1, idx2) {
         let pos1 = getRowCol(idx1);
         let pos2 = getRowCol(idx2);
-        return (Math.abs(pos1.r - pos2.r) + Math.abs(pos1.c - pos2.c) === 1);
+        let rowDiff = Math.abs(pos1.r - pos2.r);
+        let colDiff = Math.abs(pos1.c - pos2.c);
+        // Adjacent means sharing an edge (Manhattan distance == 1)
+        return (rowDiff + colDiff === 1);
     }
 
     function selectCell(index) {
+        if (lockedCells[index]) return; // Cannot select locked green cells
         activeCellIndex = index;
         render();
     }
 
     function placeNumber(num) {
-        // If this number is already placed in another cell, clear it out from there first
+        if (lockedCells[activeCellIndex]) return;
+        
+        // If number is already placed elsewhere, remove it from that cell
         let existingIndex = boardState.indexOf(num);
         if (existingIndex !== -1) {
             boardState[existingIndex] = null;
             cellHints[existingIndex] = null;
         }
 
-        // Place number into active cell and clear its hint
         boardState[activeCellIndex] = num;
         cellHints[activeCellIndex] = null;
 
-        // Instantly advance to the next cell
-        activeCellIndex = (activeCellIndex + 1) % 9;
-
+        // Auto-advance to next unlocked cell
+        for (let i = 1; i <= 9; i++) {
+            let nextIdx = (activeCellIndex + i) % 9;
+            if (!lockedCells[nextIdx]) {
+                activeCellIndex = nextIdx;
+                break;
+            }
+        }
         render();
     }
 
     function clearBoard() {
-        boardState = Array(9).fill(null);
-        cellHints = Array(9).fill(null);
-        activeCellIndex = 0;
-        document.getElementById('message').innerText = '';
+        for(let i=0; i<9; i++) {
+            if(!lockedCells[i]) {
+                boardState[i] = null;
+                cellHints[i] = null;
+            }
+        }
         render();
     }
 
@@ -296,11 +321,15 @@
         let allCorrect = true;
 
         for (let i = 0; i < 9; i++) {
+            if (lockedCells[i]) continue;
+
             let userVal = boardState[i];
             if (userVal === secretCombination[i]) {
+                lockedCells[i] = true;
                 cellHints[i] = 'green';
             } else {
                 allCorrect = false;
+                // Check if userVal is placed in a cell adjacent to its correct position in secretCombination
                 let correctPos = secretCombination.indexOf(userVal);
                 if (isAdjacent(i, correctPos)) {
                     cellHints[i] = 'blue';
@@ -311,19 +340,21 @@
         }
 
         const msgEl = document.getElementById('message');
-        if (allCorrect) {
+        if (allCorrect || lockedCells.every(val => val)) {
             msgEl.style.color = '#059669';
-            msgEl.innerText = '🎉 Congratulations! All numbers placed correctly!';
+            msgEl.innerText = '🎉 Congratulations! All numbers locked in correctly!';
         } else {
             msgEl.style.color = '#3b82f6';
-            msgEl.innerText = 'Evaluated! Feel free to click cells and change numbers to try again.';
+            msgEl.innerText = 'Evaluated! Green = Locked, Blue = Adjacent to correct spot.';
         }
         render();
     }
 
     function render() {
+        // Update HUD
         document.getElementById('hud-cell').innerText = `Cell ${activeCellIndex + 1}`;
 
+        // Render Grid
         const gridEl = document.getElementById('grid');
         gridEl.innerHTML = '';
         
@@ -331,9 +362,11 @@
             const cell = document.createElement('div');
             let cls = 'cell';
             if (idx === activeCellIndex) cls += ' selected';
-            if (cellHints[idx] === 'green') cls += ' green-hint';
-            else if (cellHints[idx] === 'blue') cls += ' blue-hint';
-            
+            if (lockedCells[idx]) {
+                cls += ' locked';
+            } else if (cellHints[idx] === 'blue') {
+                cls += ' blue-hint';
+            }
             cell.className = cls;
             cell.onclick = () => selectCell(idx);
 
@@ -344,12 +377,24 @@
             gridEl.appendChild(cell);
         });
 
+        // Render Number Pool
         const poolEl = document.getElementById('number-pool');
         poolEl.innerHTML = '';
         availableNumbers.forEach(num => {
             const btn = document.createElement('button');
             btn.className = 'pool-btn';
             btn.innerText = num;
+            let isUsed = boardState.includes(num);
+            let isLockedUsed = false;
+            
+            // Check if this number is locked in a cell
+            boardState.forEach((val, idx) => {
+                if (val === num && lockedCells[idx]) isLockedUsed = true;
+            });
+
+            btn.disabled = isUsed;
+            if (isLockedUsed) btn.style.opacity = '0.3';
+
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
         });
