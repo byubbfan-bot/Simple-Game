@@ -169,11 +169,6 @@
             color: #ffffff;
             border-color: var(--accent-blue);
         }
-        .pool-btn:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            background: #f1f5f9;
-        }
         .btn {
             display: block;
             width: 100%;
@@ -207,7 +202,7 @@
     <p class="subtitle">Fill the 9 squares with digits 1 through 9.</p>
 
     <div class="instructions">
-        <strong>How to play:</strong> Click any cell on the grid to change its number at any time, then hit <strong>Evaluate</strong>. 
+        <strong>How to play:</strong> Click a cell or let it auto-advance when you pick a number. Hit <strong>Evaluate</strong> when ready. 
         <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct.
         <br>• <span style="color: #2563eb; font-weight: bold;">Blue</span> = Number belongs adjacent (touching) to this cell.
     </div>
@@ -273,9 +268,12 @@
             cellHints[existingIndex] = null;
         }
 
-        // Place new number into active cell and clear its hint
+        // Place number into active cell and clear its hint
         boardState[activeCellIndex] = num;
         cellHints[activeCellIndex] = null;
+
+        // Instantly advance to the next cell
+        activeCellIndex = (activeCellIndex + 1) % 9;
 
         render();
     }
@@ -283,6 +281,7 @@
     function clearBoard() {
         boardState = Array(9).fill(null);
         cellHints = Array(9).fill(null);
+        activeCellIndex = 0;
         document.getElementById('message').innerText = '';
         render();
     }
@@ -351,8 +350,6 @@
             const btn = document.createElement('button');
             btn.className = 'pool-btn';
             btn.innerText = num;
-            
-            // Allow numbers to be re-selected freely from the pool for swapping
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
         });
