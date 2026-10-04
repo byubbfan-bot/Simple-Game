@@ -94,7 +94,7 @@
             border: 1px solid var(--border-color);
         }
         .hud span {
-            color: var(--accent-blue);
+            color: var(--text-main);
         }
         .grid-3x3 {
             display: grid;
@@ -117,12 +117,12 @@
             position: relative;
         }
         .cell:hover:not(.locked) {
-            border-color: var(--accent-blue);
+            border-color: #0f172a;
             transform: translateY(-2px);
         }
         .cell.selected {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            border-color: #0f172a !important;
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.15);
         }
         .cell.locked {
             background: var(--accent-green);
@@ -186,15 +186,15 @@
             transition: 0.15s ease;
         }
         .pool-btn:hover {
-            background: var(--accent-blue);
+            background: #0f172a;
             color: #ffffff;
-            border-color: var(--accent-blue);
+            border-color: #0f172a;
         }
         .btn {
             display: block;
             width: 100%;
             padding: 14px;
-            background: var(--accent-blue);
+            background: #0f172a;
             border: none;
             color: #ffffff;
             font-weight: 800;
@@ -206,7 +206,7 @@
             transition: 0.15s ease;
         }
         .btn:hover {
-            background: #2563eb;
+            background: #1e293b;
         }
         .message {
             margin-top: 15px;
@@ -352,7 +352,6 @@
     function initGame() {
         let data = syncDailyState();
         
-        // Seeded random based on day number so all players get the same daily puzzle
         let dayNum = getEastern5AMDayNumber();
         let seed = (dayNum * 9301 + 49297) % 233280;
         function seededRandom() {
@@ -488,7 +487,6 @@
             }
             triggerWinDisplay(data.triesToday);
         } else {
-            // Increment try count for next attempt
             data.triesToday++;
             localStorage.setItem('number_draft_daily_data', JSON.stringify(data));
             attemptCount = data.triesToday;
