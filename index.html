@@ -164,17 +164,18 @@
             cursor: pointer;
             transition: 0.15s ease;
         }
-        .pool-btn:hover:not(.used) {
+        .pool-btn:hover {
             background: var(--accent-blue);
             color: #ffffff;
             border-color: var(--accent-blue);
         }
         .pool-btn.used {
-            opacity: 0.3;
-            background: #e2e8f0;
-            border-color: #cbd5e1;
-            color: #94a3b8;
-            cursor: default;
+            opacity: 0.25;
+            background: #cbd5e1;
+            border-color: #94a3b8;
+            color: #64748b;
+            text-decoration: line-through;
+            cursor: pointer;
         }
         .btn {
             display: block;
@@ -222,7 +223,7 @@
     <div id="grid" class="grid-3x3"></div>
 
     <div class="catalog-section">
-        <div class="catalog-title">Available Numbers (Click to Place)</div>
+        <div class="catalog-title">Available Numbers (Faded = Already on Grid)</div>
         <div id="number-pool" class="number-pool"></div>
     </div>
 
