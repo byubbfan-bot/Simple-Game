@@ -164,17 +164,17 @@
             cursor: pointer;
             transition: 0.15s ease;
         }
-        .pool-btn:hover:not(:disabled) {
+        .pool-btn:hover {
             background: var(--accent-blue);
             color: #ffffff;
             border-color: var(--accent-blue);
         }
-        .pool-btn:disabled {
-            opacity: 0.15;
+        /* Visual indicator for used numbers, but still fully clickable */
+        .pool-btn.used {
+            opacity: 0.35;
             background: #cbd5e1;
             border-color: #94a3b8;
-            color: #64748b;
-            cursor: not-allowed;
+            color: #475569;
             text-decoration: line-through;
         }
         .btn {
@@ -223,7 +223,7 @@
     <div id="grid" class="grid-3x3"></div>
 
     <div class="catalog-section">
-        <div class="catalog-title">Available Numbers (Used numbers are disabled & crossed out)</div>
+        <div class="catalog-title">Available Numbers (Crossed out = already on grid, click anytime to swap)</div>
         <div id="number-pool" class="number-pool"></div>
     </div>
 
@@ -360,8 +360,9 @@
             btn.className = 'pool-btn';
             if (isUsed) {
                 btn.classList.add('used');
-                btn.disabled = true;
             }
+            // Not disabled anymore, so you can always click them to swap/pull numbers!
+            btn.disabled = false;
             btn.innerText = num;
             btn.onclick = () => placeNumber(num);
             poolEl.appendChild(btn);
