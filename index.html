@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Draft Puzzle</title>
+    <title>Safe Cracker - Daily Vault Puzzle</title>
     <style>
         :root {
-            --bg-base: #ffffff;
-            --bg-panel: #f8fafc;
-            --bg-card: #ffffff;
-            --border-color: #e2e8f0;
+            --bg-base: #0f172a;
+            --bg-panel: #1e293b;
+            --bg-card: #090d16;
+            --border-color: #334155;
             --accent-green: #10b981;
             --accent-yellow: #f59e0b;
-            --accent-gold: #d4af37;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
+            --accent-gold: #fbbf24;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -27,74 +27,110 @@
             justify-content: center;
             align-items: center;
             margin: 0;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
         }
         .container {
-            max-width: 500px;
+            max-width: 520px;
             width: 100%;
             background: var(--bg-panel);
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            border: 2px solid #475569;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .vault-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 4px;
         }
         h1 {
-            color: var(--text-main);
+            color: var(--accent-gold);
             font-size: 1.8em;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            margin-bottom: 6px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            margin: 0;
             text-transform: uppercase;
         }
         .subtitle {
             color: var(--text-muted);
-            margin-bottom: 20px;
-            font-size: 0.95em;
+            margin-bottom: 16px;
+            font-size: 0.9em;
             font-weight: 500;
         }
-        .instructions {
-            background: #f1f5f9;
-            border: 1px solid var(--border-color);
-            border-left: 4px solid var(--accent-yellow);
-            border-radius: 6px;
-            padding: 14px 18px;
-            margin-bottom: 20px;
-            font-size: 0.9em;
-            color: var(--text-muted);
-            text-align: left;
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
-        .instructions strong {
-            color: var(--text-main);
+        .nav-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        .icon-btn {
+            background: #090d16;
+            border: 1px solid var(--border-color);
+            color: var(--accent-gold);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.75em;
+            transition: 0.15s ease;
+        }
+        .icon-btn:hover {
+            background: var(--accent-gold);
+            color: #0f172a;
+        }
+        .mode-selector {
+            display: flex;
+            background: #090d16;
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 16px;
+            gap: 4px;
+        }
+        .mode-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px;
+            font-size: 0.75em;
+            font-weight: 800;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+        .mode-tab.active {
+            background: var(--accent-gold);
+            color: #0f172a;
         }
         .daily-tracker {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(212, 175, 55, 0.08);
+            background: rgba(251, 191, 36, 0.1);
             padding: 10px 16px;
-            border-radius: 6px;
-            border: 1px solid rgba(212, 175, 55, 0.25);
-            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            margin-bottom: 16px;
             font-size: 0.9em;
             font-weight: 600;
         }
         .daily-tracker strong {
-            color: #b45309;
+            color: var(--accent-gold);
         }
-        .hud {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            font-weight: 700;
-            font-size: 0.95em;
-            background: #ffffff;
-            padding: 10px 16px;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-        }
-        .hud span {
-            color: var(--text-main);
+        .grid-container-wrapper {
+            position: relative;
         }
         .grid-3x3 {
             display: grid;
@@ -102,190 +138,374 @@
             grid-template-rows: repeat(3, 1fr);
             gap: 12px;
             margin-bottom: 25px;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .grid-3x3.vault-door-open {
+            transform: perspective(800px) rotateY(-80deg) scale(0.95);
+            transform-origin: left;
+            opacity: 0.2;
+        }
+        .grid-mask {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #090d16;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            gap: 12px;
+            border: 2px solid var(--border-color);
         }
         .cell {
             aspect-ratio: 1;
             background: var(--bg-card);
             border: 2px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 10px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-            transition: all 0.15s ease;
+            transition: transform 0.1s ease, border-color 0.15s ease, background-color 0.3s ease;
             position: relative;
+            user-select: none;
         }
         .cell:hover:not(.locked) {
-            border-color: #0f172a;
+            border-color: var(--accent-gold);
             transform: translateY(-2px);
         }
         .cell.selected {
-            border-color: #0f172a !important;
-            box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.15);
+            border-color: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
         }
         .cell.locked {
-            background: var(--accent-green);
-            border-color: #059669;
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent-green);
             color: #ffffff;
             cursor: not-allowed;
         }
         .cell.locked .cell-label, .cell.locked .cell-value {
-            color: #ffffff;
+            color: #34d399;
         }
         .cell.yellow-hint {
-            background: rgba(245, 158, 11, 0.12);
+            background: rgba(245, 158, 11, 0.2);
             border-color: var(--accent-yellow);
         }
         .cell-label {
-            font-size: 0.65em;
+            font-size: 0.6em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             color: var(--text-muted);
-            font-weight: 700;
+            font-weight: 800;
             position: absolute;
             top: 6px;
             left: 8px;
         }
         .cell-value {
-            font-size: 2em;
-            font-weight: 800;
+            font-size: 2.2em;
+            font-weight: 900;
             color: var(--text-main);
+        }
+        @keyframes flipCard {
+            0% { transform: rotateX(0deg); }
+            50% { transform: rotateX(90deg); opacity: 0.5; }
+            100% { transform: rotateX(0deg); opacity: 1; }
+        }
+        .flip { animation: flipCard 0.4s ease; }
+        @keyframes shakeGrid {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shakeGrid 0.4s ease; }
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-gold);
+            animation: burst 0.8s ease-out forwards;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+        @keyframes burst {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0.3); opacity: 0; }
         }
         .catalog-section {
             margin-bottom: 25px;
-            background: #ffffff;
-            padding: 16px;
-            border-radius: 8px;
+            background: #090d16;
+            padding: 16px 12px;
+            border-radius: 10px;
             border: 1px solid var(--border-color);
         }
         .catalog-title {
-            font-size: 0.8em;
+            font-size: 0.75em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 700;
+            letter-spacing: 1px;
+            font-weight: 800;
             color: var(--text-muted);
             margin-bottom: 12px;
         }
         .number-pool {
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 6px;
+            flex-wrap: nowrap;
         }
         .pool-btn {
             width: 42px;
-            height: 42px;
-            background: #f8fafc;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 1.1em;
-            font-weight: 700;
+            height: 46px;
+            background: #1e293b;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1.15em;
+            font-weight: 900;
             color: var(--text-main);
             cursor: pointer;
             transition: 0.15s ease;
+            user-select: none;
+            flex: 1;
         }
         .pool-btn:hover {
-            background: #0f172a;
-            color: #ffffff;
-            border-color: #0f172a;
+            background: var(--accent-gold);
+            color: #0f172a;
+            border-color: var(--accent-gold);
+            transform: translateY(-2px);
         }
         .btn {
             display: block;
             width: 100%;
             padding: 14px;
-            background: #0f172a;
+            background: var(--accent-gold);
             border: none;
-            color: #ffffff;
-            font-weight: 800;
+            color: #0f172a;
+            font-weight: 900;
             border-radius: 8px;
             cursor: pointer;
             font-size: 0.95em;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             transition: 0.15s ease;
         }
-        .btn:hover {
-            background: #1e293b;
-        }
+        .btn:hover { background: #fcd34d; }
         .message {
             margin-top: 15px;
             font-weight: 700;
-            font-size: 0.95em;
+            font-size: 0.9em;
             min-height: 24px;
         }
-        /* Win Banner Graphic Overlay */
         .result-graphic {
             padding: 25px 20px;
-            border-radius: 8px;
+            border-radius: 10px;
             text-align: center;
             margin: 20px 0;
-            border: 1px solid #059669;
-            background: #ecfdf5;
+            border: 1px solid var(--accent-green);
+            background: rgba(16, 185, 129, 0.1);
         }
         .graphic-title {
             font-size: 1.6em;
             font-weight: 900;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             text-transform: uppercase;
             margin: 0 0 8px 0;
-            color: #065f46;
+            color: #34d399;
         }
         .graphic-banner {
             font-size: 0.95em;
             font-weight: 500;
             margin-bottom: 15px;
-            color: #047857;
+            color: #a7f3d0;
         }
         .percentile-badge {
-            background: #ffffff;
-            border: 1px solid #10b981;
-            color: #047857;
-            padding: 10px 16px;
-            border-radius: 6px;
+            background: #090d16;
+            border: 1px solid var(--accent-green);
+            color: #34d399;
+            padding: 12px 16px;
+            border-radius: 8px;
             font-size: 0.9em;
             font-weight: 700;
             margin: 10px auto;
             max-width: 360px;
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-card {
+            background: var(--bg-panel);
+            border: 2px solid #475569;
+            padding: 25px;
+            border-radius: 14px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            color: var(--text-main);
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .stat-box {
+            background: #090d16;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .stat-value {
+            font-size: 1.3em;
+            font-weight: 900;
+            color: var(--accent-gold);
+        }
+        .stat-label {
+            font-size: 0.65em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+        .rank-badge-box {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.4);
+            padding: 12px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .archive-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin: 15px 0;
+        }
+        .archive-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #090d16;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: 0.15s ease;
+        }
+        .archive-item:hover { border-color: var(--accent-gold); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Number Draft</h1>
-    <p class="subtitle">Fill the 9 squares with digits 1 through 9.</p>
+<div class="container" id="main-container">
+    <div class="top-nav">
+        <div style="font-size: 0.8em; font-weight: 800; color: var(--accent-gold);" id="header-rank-title">🔓 Apprentice</div>
+        <div class="nav-buttons">
+            <button class="icon-btn" onclick="openHowToModal()">❓ Help</button>
+            <button class="icon-btn" onclick="toggleAudio()" id="sound-toggle-btn">🔊 Sound</button>
+            <button class="icon-btn" onclick="openArchiveModal()">📂 Archive</button>
+            <button class="icon-btn" onclick="openStatsModal()">📊 Stats</button>
+        </div>
+    </div>
+
+    <div class="vault-header">
+        <h1>🔐 Safe Cracker</h1>
+    </div>
+    <p class="subtitle">Crack the 9-digit vault tumbler combination.</p>
+
+    <!-- Difficulty Game Mode Tabs -->
+    <div class="mode-selector">
+        <button class="mode-tab active" id="tab-daily" onclick="switchDifficulty('daily')">Daily Vault</button>
+        <button class="mode-tab" id="tab-easy" onclick="switchDifficulty('easy')">Easy</button>
+        <button class="mode-tab" id="tab-standard" onclick="switchDifficulty('standard')">Standard</button>
+        <button class="mode-tab" id="tab-master" onclick="switchDifficulty('master')">Master</button>
+    </div>
 
     <div class="daily-tracker">
-        <div>Attempt: <strong id="attempt-counter">Attempt #1</strong></div>
-        <div style="font-size: 0.85em; color: var(--text-muted);">Resets 5 AM ET: <span id="daily-timer" style="color: #b45309; font-weight: bold;">--:--:--</span></div>
-    </div>
-
-    <div class="instructions">
-        <strong>How to play:</strong> Click a cell or let it auto-advance when you pick a number. Hit <strong>Evaluate Board</strong> when ready. 
-        <br>• <span style="color: #059669; font-weight: bold;">Green</span> = Exact position correct (locks in!).
-        <br>• <span style="color: #d97706; font-weight: bold;">Yellow</span> = Number belongs adjacent (touching) to this cell.
-    </div>
-
-    <div class="hud">
-        <div>Active Cell: <span id="hud-cell">Cell 1</span></div>
-        <button onclick="clearBoard()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.85em; font-weight:600; text-decoration:underline;">Reset Board</button>
+        <div>Attempt: <strong id="attempt-counter">Attempt #1</strong> | Timer: <strong id="timer-display" style="color:var(--accent-gold);">0s</strong></div>
+        <div style="font-size: 0.8em; color: var(--text-muted);" id="timer-label">Resets 5 AM ET: <span id="daily-timer" style="color: var(--accent-gold); font-weight: bold;">--:--:--</span></div>
     </div>
 
     <div id="game-workspace">
-        <div id="grid" class="grid-3x3"></div>
+        <div class="grid-container-wrapper">
+            <div id="grid" class="grid-3x3"></div>
+            <div id="start-mask" class="grid-mask">
+                <div style="font-weight: 800; font-size: 1.1em; color: var(--accent-gold);">🔒 Vault Secured</div>
+                <div style="font-size: 0.8em; color: var(--text-muted); padding: 0 15px;">Ready to crack the combination? Timer starts on click.</div>
+                <button class="btn" onclick="startVaultGame()" style="width: auto; padding: 10px 24px; margin-top: 6px;">▶ Play Vault</button>
+            </div>
+        </div>
 
         <div class="catalog-section">
-            <div class="catalog-title">Available Numbers</div>
+            <div class="catalog-title">Combination Dials</div>
             <div id="number-pool" class="number-pool"></div>
         </div>
 
-        <button class="btn" onclick="evaluateBoard()">Evaluate Board</button>
+        <button class="btn" onclick="evaluateBoard()">Test Combination</button>
         <div id="message" class="message"></div>
     </div>
 
     <!-- WIN BANNER CONTAINER -->
     <div id="win-container" style="display:none;"></div>
+</div>
+
+<!-- HOW TO PLAY MODAL -->
+<div id="howto-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <h2 style="color: var(--accent-gold); margin-top:0; text-transform:uppercase;">How to Crack the Vault</h2>
+        <p style="font-size: 0.9em; color: var(--text-muted); text-align: left; line-height: 1.6;">
+            Your objective is to place digits <strong>1 through 9</strong> into the 3x3 vault grid so every position matches the secret combination.
+            <br><br>• <span style="color: #34d399; font-weight: bold;">Green</span> = Correct position! The tumbler locks permanently.
+            <br>• <span style="color: #fbbf24; font-weight: bold;">Yellow</span> = The digit is correct, but belongs in an <em>adjacent</em> (touching) square.
+            <br><br>Tap a tumbler square to select it, then tap a number from the pool below to place or swap numbers instantly. When ready, click <strong>Test Combination</strong>!
+        </p>
+        <button class="btn" onclick="closeHowToModal()" style="margin-top:20px;">Got It</button>
+    </div>
+</div>
+
+<!-- STATS MODAL -->
+<div id="stats-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <h2 style="color: var(--accent-gold); margin-top:0; text-transform:uppercase;">Agent Profile</h2>
+        <div class="rank-badge-box">
+            <div style="font-size: 0.75em; text-transform:uppercase; color: var(--text-muted);">Security Clearance</div>
+            <div id="modal-rank-title" style="font-size: 1.3em; font-weight: 900; color: var(--accent-gold); margin-top: 2px;">Apprentice Locksmith</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-value" id="stat-played">0</div>
+                <div class="stat-label">Played</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat-win">0%</div>
+                <div class="stat-label">Win %</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat-streak">0</div>
+                <div class="stat-label">Streak</div>
+            </div>
+        </div>
+
+        <button class="btn" onclick="closeStatsModal()" style="margin-top:20px;">Close</button>
+    </div>
+</div>
+
+<!-- ARCHIVE MODAL -->
+<div id="archive-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+        <h2 style="color: var(--accent-gold); margin-top:0; text-transform:uppercase;">Vault Archive</h2>
+        <p style="font-size:0.85em; color:var(--text-muted);">Play past daily puzzles in practice mode.</p>
+        <div class="archive-list" id="archive-list-container"></div>
+        <button class="btn" onclick="closeArchiveModal()" style="margin-top:15px;">Close</button>
+    </div>
 </div>
 
 <script>
@@ -295,7 +515,54 @@
     let activeCellIndex = 0;
     let lockedCells = Array(9).fill(false);
     let cellHints = Array(9).fill(null);
+    let attemptHistory = [];
     let attemptCount = 1;
+    let secondsElapsed = 0;
+    let timerInterval = null;
+    let activeMode = 'daily';
+    let activePuzzleSeed = null;
+    let soundEnabled = true;
+    let gameStarted = false;
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type, duration, vol = 0.05) {
+        if (!soundEnabled) return;
+        try {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {}
+    }
+    function soundClick() { playTone(600, 'triangle', 0.05, 0.04); }
+    function soundLock() { 
+        playTone(300, 'square', 0.1, 0.06); 
+        setTimeout(() => playTone(450, 'square', 0.15, 0.08), 80);
+    }
+    function soundFail() { playTone(150, 'sawtooth', 0.2, 0.08); }
+    function soundVaultOpen() {
+        playTone(180, 'sawtooth', 0.1, 0.08);
+        setTimeout(() => playTone(320, 'square', 0.12, 0.1), 100);
+        setTimeout(() => playTone(540, 'triangle', 0.15, 0.12), 220);
+        setTimeout(() => playTone(780, 'sine', 0.5, 0.15), 340);
+    }
+
+    function toggleAudio() {
+        soundEnabled = !soundEnabled;
+        const btn = document.getElementById('sound-toggle-btn');
+        btn.innerText = soundEnabled ? "🔊 Sound" : "🔇 Muted";
+        soundClick();
+    }
+
+    function openHowToModal() { document.getElementById('howto-modal').style.display = 'flex'; }
+    function closeHowToModal() { document.getElementById('howto-modal').style.display = 'none'; }
 
     function getEastern5AMDayNumber() {
         const now = new Date();
@@ -326,94 +593,307 @@
     }
     setInterval(updateDailyCountdown, 1000);
 
-    function getDailyHistory() {
-        let raw = localStorage.getItem('number_draft_daily_data');
-        if (!raw) return { currentDay: null, triesToday: 1, todayWon: false };
-        try {
-            return JSON.parse(raw);
-        } catch(e) {
-            return { currentDay: null, triesToday: 1, todayWon: false };
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        secondsElapsed = 0;
+        document.getElementById('timer-display').innerText = '0s';
+        timerInterval = setInterval(() => {
+            secondsElapsed++;
+            document.getElementById('timer-display').innerText = `${secondsElapsed}s`;
+        }, 1000);
+    }
+
+    function triggerConfettiBurst(element) {
+        const rect = element.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < 16; i++) {
+            const p = document.createElement('div');
+            p.className = 'confetti';
+            p.style.left = `${x}px`;
+            p.style.top = `${y}px`;
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 40 + Math.random() * 80;
+            p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
+            p.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 800);
         }
     }
 
-    function syncDailyState() {
-        let data = getDailyHistory();
-        let today = getEastern5AMDayNumber();
-        if (data.currentDay !== today) {
-            data.currentDay = today;
-            data.triesToday = 1;
-            data.todayWon = false;
-            localStorage.setItem('number_draft_daily_data', JSON.stringify(data));
+    function getSecurityRank(wonCount) {
+        if (wonCount >= 25) return { title: "👑 Legendary Heist Master", short: "👑 Master" };
+        if (wonCount >= 10) return { title: "🕵️ Master Safecracker", short: "🕵️ Safecracker" };
+        if (wonCount >= 3) return { title: "🛡 Vault Tech", short: "🛡️ Vault Tech" };
+        return { title: "🔓 Apprentice Locksmith", short: "🔓 Apprentice" };
+    }
+
+    function updateRankDisplay(wonCount) {
+        let rank = getSecurityRank(wonCount);
+        document.getElementById('header-rank-title').innerText = rank.short;
+        document.getElementById('modal-rank-title').innerText = rank.title;
+    }
+
+    function getGlobalStats() {
+        let raw = localStorage.getItem('safe_cracker_stats_v3');
+        if (!raw) return { played: 0, won: 0, streak: 0 };
+        try { return JSON.parse(raw); } catch(e) { return { played: 0, won: 0, streak: 0 }; }
+    }
+    function updateGlobalStats(wonGame) {
+        if (activeMode !== 'daily') return;
+        let stats = getGlobalStats();
+        stats.played++;
+        if (wonGame) {
+            stats.won++;
+            stats.streak++;
+        } else {
+            stats.streak = 0;
         }
-        attemptCount = data.triesToday;
-        return data;
+        localStorage.setItem('safe_cracker_stats_v3', JSON.stringify(stats));
+        updateRankDisplay(stats.won);
+    }
+
+    function openStatsModal() {
+        let stats = getGlobalStats();
+        document.getElementById('stat-played').innerText = stats.played;
+        document.getElementById('stat-win').innerText = stats.played > 0 ? Math.round((stats.won / stats.played) * 100) + '%' : '0%';
+        document.getElementById('stat-streak').innerText = stats.streak;
+        updateRankDisplay(stats.won);
+        document.getElementById('stats-modal').style.display = 'flex';
+    }
+    function closeStatsModal() {
+        document.getElementById('stats-modal').style.display = 'none';
+    }
+
+    function switchDifficulty(mode) {
+        activeMode = mode;
+        document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById(`tab-${mode}`).classList.add('active');
+
+        if (mode === 'daily') {
+            document.getElementById('timer-label').innerHTML = `Resets 5 AM ET: <span id="daily-timer" style="color: var(--accent-gold); font-weight: bold;">--:--:--</span>`;
+            initGame();
+        } else {
+            document.getElementById('timer-label').innerText = `Practice Mode`;
+            initPracticeGame(mode);
+        }
+    }
+
+    function generateStarterBoardByDifficulty(secret, seededRand, mode) {
+        let board = [...secret];
+        let attempts = 0;
+        
+        // Loop to guarantee the generated board is NOT already fully solved
+        while (attempts < 50) {
+            board = [...secret];
+            let indices = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+            
+            for (let i = indices.length - 1; i > 0; i--) {
+                let j = Math.floor(seededRand() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+
+            let numGreens = 1 + Math.floor(seededRand() * 2);
+            let numYellows = 2 + Math.floor(seededRand() * 2);
+
+            if (mode === 'easy') {
+                numGreens = 3;
+                numYellows = 4;
+            } else if (mode === 'master') {
+                numGreens = 1;
+                numYellows = 1;
+            }
+
+            let greenIndices = indices.splice(0, numGreens);
+            let yellowIndices = indices.splice(0, numYellows);
+
+            for (let gIdx of greenIndices) {
+                board[gIdx] = secret[gIdx];
+            }
+
+            for (let yIdx of yellowIndices) {
+                let neighbors = [];
+                for (let i = 0; i < 9; i++) {
+                    if (isAdjacent(i, yIdx) && i !== yIdx && !greenIndices.includes(i)) {
+                        neighbors.push(i);
+                    }
+                }
+                if (neighbors.length > 0) {
+                    let n = neighbors[Math.floor(seededRand() * neighbors.length)];
+                    let temp = board[n];
+                    board[n] = board[yIdx];
+                    board[yIdx] = temp;
+                }
+            }
+
+            for (let rIdx of indices) {
+                if (board[rIdx] === secret[rIdx]) {
+                    let validTarget = indices.find(o => o !== rIdx && board[o] !== secret[o]);
+                    if (validTarget !== undefined) {
+                        let temp = board[rIdx];
+                        board[rIdx] = board[validTarget];
+                        board[validTarget] = temp;
+                    }
+                }
+            }
+
+            // Verify it's not identical to the secret solution
+            let isSolved = board.every((val, idx) => val === secret[idx]);
+            if (!isSolved) break;
+            attempts++;
+        }
+
+        return board;
     }
 
     function initGame() {
-        let data = syncDailyState();
+        let today = getEastern5AMDayNumber();
+        activePuzzleSeed = today;
+        attemptHistory = [];
+        gameStarted = false;
+        document.getElementById('start-mask').style.display = 'flex';
+        if (timerInterval) clearInterval(timerInterval);
+        document.getElementById('timer-display').innerText = '0s';
         
-        let dayNum = getEastern5AMDayNumber();
-        let seed = (dayNum * 9301 + 49297) % 233280;
-        function seededRandom() {
-            seed = (seed * 9301 + 49297) % 233280;
-            return seed / 233280;
+        let secretSeed = (today * 9301 + 49297) % 233280;
+        function secretRandom() {
+            secretSeed = (secretSeed * 9301 + 49297) % 233280;
+            return secretSeed / 233280;
         }
 
         let pool = [...availableNumbers];
         secretCombination = [];
         while (pool.length > 0) {
-            let index = Math.floor(seededRandom() * pool.length);
+            let index = Math.floor(secretRandom() * pool.length);
             secretCombination.push(pool.splice(index, 1)[0]);
         }
         
-        boardState = Array(9).fill(null);
-        lockedCells = Array(9).fill(false);
-        cellHints = Array(9).fill(null);
-        activeCellIndex = 0;
+        let starterSeed = (today * 73939 + 1319) % 233280;
+        function starterRandom() {
+            starterSeed = (starterSeed * 9301 + 49297) % 233280;
+            return starterSeed / 233280;
+        }
 
+        lockedCells = Array(9).fill(false);
+        boardState = generateStarterBoardByDifficulty(secretCombination, starterRandom, 'daily');
+        cellHints = Array(9).fill(null);
+        for (let i = 0; i < 9; i++) {
+            if (boardState[i] === secretCombination[i]) {
+                lockedCells[i] = true;
+                cellHints[i] = 'green';
+            } else {
+                let correctPos = secretCombination.indexOf(boardState[i]);
+                if (isAdjacent(i, correctPos)) {
+                    cellHints[i] = 'yellow';
+                }
+            }
+        }
+
+        attemptCount = 1;
+        setupActiveCell();
         document.getElementById('message').innerText = '';
+        document.getElementById('grid').classList.remove('vault-door-open');
         document.getElementById('win-container').style.display = 'none';
         document.getElementById('game-workspace').style.display = 'block';
-        
         document.getElementById('attempt-counter').innerText = `Attempt #${attemptCount}`;
-        updateDailyCountdown();
+        updateRankDisplay(getGlobalStats().won);
         render();
     }
 
-    function getRowCol(index) {
-        return { r: Math.floor(index / 3), c: index % 3 };
+    function initPracticeGame(mode) {
+        attemptCount = 1;
+        attemptHistory = [];
+        gameStarted = false;
+        document.getElementById('start-mask').style.display = 'flex';
+        if (timerInterval) clearInterval(timerInterval);
+        document.getElementById('timer-display').innerText = '0s';
+
+        let randomSeed = Math.floor(Math.random() * 100000);
+        activePuzzleSeed = randomSeed;
+
+        let secretSeed = (randomSeed * 9301 + 49297) % 233280;
+        function secretRandom() {
+            secretSeed = (secretSeed * 9301 + 49297) % 233280;
+            return secretSeed / 233280;
+        }
+
+        let pool = [...availableNumbers];
+        secretCombination = [];
+        while (pool.length > 0) {
+            let index = Math.floor(secretRandom() * pool.length);
+            secretCombination.push(pool.splice(index, 1)[0]);
+        }
+
+        let starterSeed = (randomSeed * 73939 + 1319) % 233280;
+        function starterRandom() {
+            starterSeed = (starterSeed * 9301 + 49297) % 233280;
+            return starterSeed / 233280;
+        }
+
+        lockedCells = Array(9).fill(false);
+        boardState = generateStarterBoardByDifficulty(secretCombination, starterRandom, mode);
+        cellHints = Array(9).fill(null);
+        for (let i = 0; i < 9; i++) {
+            if (boardState[i] === secretCombination[i]) {
+                lockedCells[i] = true;
+                cellHints[i] = 'green';
+            } else {
+                let correctPos = secretCombination.indexOf(boardState[i]);
+                if (isAdjacent(i, correctPos)) {
+                    cellHints[i] = 'yellow';
+                }
+            }
+        }
+
+        setupActiveCell();
+        document.getElementById('message').innerText = '';
+        document.getElementById('grid').classList.remove('vault-door-open');
+        document.getElementById('win-container').style.display = 'none';
+        document.getElementById('game-workspace').style.display = 'block';
+        document.getElementById('attempt-counter').innerText = `Attempt #1`;
+        render();
     }
 
-    function isAdjacent(idx1, idx2) {
-        let pos1 = getRowCol(idx1);
-        let pos2 = getRowCol(idx2);
-        return (Math.abs(pos1.r - pos2.r) + Math.abs(pos1.c - pos2.c) === 1);
+    function startVaultGame() {
+        soundClick();
+        gameStarted = true;
+        document.getElementById('start-mask').style.display = 'none';
+        startTimer();
+    }
+
+    function setupActiveCell() {
+        activeCellIndex = 0;
+        for (let i = 0; i < 9; i++) {
+            if (!lockedCells[i]) {
+                activeCellIndex = i;
+                break;
+            }
+        }
     }
 
     function selectCell(index) {
-        if (lockedCells[index]) return;
+        if (!gameStarted || lockedCells[index]) return;
+        soundClick();
         activeCellIndex = index;
         render();
     }
 
     function placeNumber(num) {
-        if (lockedCells[activeCellIndex]) return;
+        if (!gameStarted || lockedCells[activeCellIndex]) return;
+        soundClick();
 
         let existingIndex = boardState.indexOf(num);
-        
         if (existingIndex !== -1 && existingIndex !== activeCellIndex) {
             if (lockedCells[existingIndex]) return;
-
             let temp = boardState[activeCellIndex];
             boardState[activeCellIndex] = num;
             boardState[existingIndex] = temp;
-            
             cellHints[activeCellIndex] = null;
             cellHints[existingIndex] = null;
         } else {
             boardState[activeCellIndex] = num;
             cellHints[activeCellIndex] = null;
-            
             for (let i = 1; i <= 9; i++) {
                 let nextIdx = (activeCellIndex + i) % 9;
                 if (!lockedCells[nextIdx]) {
@@ -422,24 +902,6 @@
                 }
             }
         }
-
-        render();
-    }
-
-    function clearBoard() {
-        for (let i = 0; i < 9; i++) {
-            if (!lockedCells[i]) {
-                boardState[i] = null;
-                cellHints[i] = null;
-            }
-        }
-        for (let i = 0; i < 9; i++) {
-            if (!lockedCells[i]) {
-                activeCellIndex = i;
-                break;
-            }
-        }
-        document.getElementById('message').innerText = '';
         render();
     }
 
@@ -451,22 +913,42 @@
         return Math.max(15, 80 - (tries * 10));
     }
 
+    function recordCurrentAttemptState() {
+        let gridLines = [];
+        for (let r = 0; r < 3; r++) {
+            let rowStr = "";
+            for (let c = 0; c < 3; c++) {
+                let idx = r * 3 + c;
+                if (lockedCells[idx] || boardState[idx] === secretCombination[idx]) rowStr += "🟩";
+                else if (cellHints[idx] === 'yellow') rowStr += "🟨";
+                else rowStr += "⬛";
+            }
+            gridLines.push(rowStr);
+        }
+        attemptHistory.push(gridLines.join('\n'));
+    }
+
     function evaluateBoard() {
+        if (!gameStarted) return;
         if (boardState.some(val => val === null)) {
-            document.getElementById('message').style.color = '#ef4444';
-            document.getElementById('message').innerText = 'Please fill all 9 squares before evaluating!';
+            soundFail();
+            document.getElementById('message').style.color = '#f87171';
+            document.getElementById('message').innerText = 'All tumblers must have numbers before testing!';
             return;
         }
 
         let allCorrect = true;
+        let newlyLocked = false;
 
         for (let i = 0; i < 9; i++) {
             if (lockedCells[i]) continue;
-
             let userVal = boardState[i];
             if (userVal === secretCombination[i]) {
                 lockedCells[i] = true;
                 cellHints[i] = 'green';
+                newlyLocked = true;
+                const cellEl = document.querySelectorAll('.cell')[i];
+                if (cellEl) triggerConfettiBurst(cellEl);
             } else {
                 allCorrect = false;
                 let correctPos = secretCombination.indexOf(userVal);
@@ -478,29 +960,86 @@
             }
         }
 
-        let data = getDailyHistory();
+        recordCurrentAttemptState();
 
         if (allCorrect || lockedCells.every(val => val)) {
-            if (!data.todayWon) {
-                data.todayWon = true;
-                localStorage.setItem('number_draft_daily_data', JSON.stringify(data));
-            }
-            triggerWinDisplay(data.triesToday);
-        } else {
-            data.triesToday++;
-            localStorage.setItem('number_draft_daily_data', JSON.stringify(data));
-            attemptCount = data.triesToday;
-            document.getElementById('attempt-counter').innerText = `Attempt #${attemptCount}`;
+            if (timerInterval) clearInterval(timerInterval);
+            soundVaultOpen();
+            const gridEl = document.getElementById('grid');
+            if (gridEl) gridEl.classList.add('vault-door-open');
 
-            document.getElementById('message').style.color = '#b45309';
-            document.getElementById('message').innerText = 'Evaluated! Green numbers are locked. Yellow means adjacent to correct spot.';
-            for (let i = 0; i < 9; i++) {
-                if (!lockedCells[i]) {
-                    activeCellIndex = i;
-                    break;
-                }
+            if (activeMode === 'daily') {
+                updateGlobalStats(true);
             }
+            
+            setTimeout(() => {
+                triggerWinDisplay(attemptCount);
+            }, 650);
             render();
+            return;
+        }
+
+        if (newlyLocked) {
+            soundLock();
+        } else {
+            soundFail();
+            const gridEl = document.getElementById('grid');
+            if (gridEl) {
+                gridEl.classList.add('shake');
+                setTimeout(() => gridEl.classList.remove('shake'), 400);
+            }
+        }
+
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(c => c.classList.add('flip'));
+        setTimeout(() => cells.forEach(c => c.classList.remove('flip')), 400);
+
+        attemptCount++;
+        document.getElementById('attempt-counter').innerText = `Attempt #${attemptCount}`;
+        document.getElementById('message').style.color = 'var(--accent-gold)';
+        document.getElementById('message').innerText = 'Combination tested! Correct tumblers locked in.';
+        setupActiveCell();
+        render();
+    }
+
+    function generateShareEmojiGrid() {
+        let pairs = [];
+        for (let i = 0; i < attemptHistory.length; i += 2) {
+            let leftBlock = attemptHistory[i].split('\n');
+            let rightBlock = (i + 1 < attemptHistory.length) ? attemptHistory[i + 1].split('\n') : ["   ", "   ", "   "];
+            
+            let combinedLine1 = leftBlock[0] + "    " + rightBlock[0];
+            let combinedLine2 = leftBlock[1] + "    " + rightBlock[1];
+            let combinedLine3 = leftBlock[2] + "    " + rightBlock[2];
+            
+            pairs.push(combinedLine1 + '\n' + combinedLine2 + '\n' + combinedLine3);
+        }
+        return pairs.join('\n\n');
+    }
+
+    function shareResults(tries) {
+        let percentile = calculatePercentile(tries);
+        let emojiGrid = generateShareEmojiGrid();
+        let shareText = `🔐 Safe Cracker (${activeMode.toUpperCase()}) - ${tries} ${tries === 1 ? 'Attempt' : 'Attempts'} (${secondsElapsed}s)\nBeat ${percentile}% of players!\n\n${emojiGrid}\n\nPlay here: ${window.location.origin + window.location.pathname}`;
+
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareText).then(() => {
+                alert('Results copied to clipboard!');
+            });
+        } else {
+            prompt('Copy your results:', shareText);
+        }
+    }
+
+    function generateCrewChallengeLink() {
+        let randomSeed = Math.floor(Math.random() * 90000) + 10000;
+        let challengeUrl = `${window.location.origin + window.location.pathname}?challenge=${randomSeed}`;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(challengeUrl).then(() => {
+                alert('Heist Crew challenge link copied! Send this to friends to race head-to-head.');
+            });
+        } else {
+            prompt('Copy challenge link:', challengeUrl);
         }
     }
 
@@ -513,29 +1052,68 @@
 
         winContainer.innerHTML = `
             <div class="result-graphic">
-                <div class="graphic-title">🎉 Congratulations!</div>
-                <div class="graphic-banner">You successfully solved today's number sequence!</div>
+                <div class="graphic-title">🔓 Vault Cracked!</div>
+                <div class="graphic-banner">You bypassed security in <strong>${secondsElapsed}s</strong>!</div>
                 <div class="percentile-badge">
-                    📊 Solved in <strong>${tries} ${tries === 1 ? 'try' : 'tries'}</strong><br>
-                    🏆 You performed better than <strong>${percentile}%</strong> of players today!
+                    📊 Cracked in <strong>${tries} ${tries === 1 ? 'attempt' : 'attempts'}</strong><br>
+                    🏆 Better than <strong>${percentile}%</strong> of safe crackers!
                 </div>
-                <div style="margin-top: 20px; color: var(--text-muted); font-size: 0.85em;">
-                    Next daily puzzle available at 5:00 AM ET.
+                <div style="display:flex; gap: 8px; margin-top: 15px;">
+                    <button class="btn" onclick="shareResults(${tries})" style="background: var(--accent-green); color: #fff; flex:1;">📋 Share Score</button>
+                    <button class="btn" onclick="generateCrewChallengeLink()" style="background: var(--accent-gold); color: #0f172a; flex:1;">🔗 Heist Crew Link</button>
+                </div>
+                <div style="margin-top: 15px; color: var(--text-muted); font-size: 0.8em;">
+                    ⏰ ${activeMode === 'daily' ? 'Next daily vault opens at 5:00 AM ET.' : '<button class="icon-btn" onclick="switchDifficulty(\'' + activeMode + '\')" style="margin-top:5px;">Play Again</button>'}
                 </div>
             </div>
         `;
     }
 
-    function render() {
-        document.getElementById('hud-cell').innerText = `Cell ${activeCellIndex + 1}`;
+    function openArchiveModal() {
+        const container = document.getElementById('archive-list-container');
+        container.innerHTML = '';
+        let currentDay = getEastern5AMDayNumber();
 
+        for (let i = 1; i <= 7; i++) {
+            let pastDay = currentDay - i;
+            let dateObj = new Date((pastDay * 86400000) + (5 * 3600000));
+            let dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+            
+            let item = document.createElement('div');
+            item.className = 'archive-item';
+            item.innerHTML = `<span>Vault #${pastDay} (${dateStr})</span> <span style="color:var(--accent-gold); font-weight:700;">Play ➔</span>`;
+            item.onclick = () => {
+                closeArchiveModal();
+                activeMode = 'daily';
+                activePuzzleSeed = pastDay;
+                initGame();
+            };
+            container.appendChild(item);
+        }
+        document.getElementById('archive-modal').style.display = 'flex';
+    }
+    function closeArchiveModal() {
+        document.getElementById('archive-modal').style.display = 'none';
+    }
+
+    function getRowCol(index) {
+        return { r: Math.floor(index / 3), c: index % 3 };
+    }
+
+    function isAdjacent(idx1, idx2) {
+        let pos1 = getRowCol(idx1);
+        let pos2 = getRowCol(idx2);
+        return (Math.abs(pos1.r - pos2.r) + Math.abs(pos1.c - pos2.c) === 1);
+    }
+
+    function render() {
         const gridEl = document.getElementById('grid');
         gridEl.innerHTML = '';
         
         boardState.forEach((val, idx) => {
             const cell = document.createElement('div');
             let cls = 'cell';
-            if (idx === activeCellIndex) cls += ' selected';
+            if (idx === activeCellIndex && gameStarted) cls += ' selected';
             if (lockedCells[idx]) {
                 cls += ' locked';
             } else if (cellHints[idx] === 'yellow') {
@@ -543,9 +1121,10 @@
             }
             cell.className = cls;
             cell.onclick = () => selectCell(idx);
+            cell.ontouchend = (e) => { e.preventDefault(); selectCell(idx); };
 
             cell.innerHTML = `
-                <span class="cell-label">#${idx + 1}</span>
+                <span class="cell-label">Dial #${idx + 1}</span>
                 <span class="cell-value">${val !== null ? val : ''}</span>
             `;
             gridEl.appendChild(cell);
@@ -559,11 +1138,13 @@
             btn.disabled = false;
             btn.innerText = num;
             btn.onclick = () => placeNumber(num);
+            btn.ontouchend = (e) => { e.preventDefault(); placeNumber(num); };
             poolEl.appendChild(btn);
         });
     }
 
-    window.onload = initGame;
+    // Auto-initialize immediately
+    initGame();
 </script>
 
 </body>
